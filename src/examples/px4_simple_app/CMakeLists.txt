@@ -37,3 +37,11 @@ px4_add_module(
 		px4_simple_app.c
 	DEPENDS
 	)
+
+px4_add_module(
+	MODULE examples__my_test
+	MAIN my_test
+	SRCS
+		my_test.c
+	DEPENDS
+	)
