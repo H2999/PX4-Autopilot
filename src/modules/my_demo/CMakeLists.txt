@@ -39,7 +39,6 @@ px4_add_module(
 	SRCS
 		MyDemo.cpp
 		MyDemo.hpp
-		my_demo_params.c
 	DEPENDS
 		circuit_breaker
 		mathlib

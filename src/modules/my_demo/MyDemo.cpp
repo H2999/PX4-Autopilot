@@ -91,13 +91,13 @@ MyDemo::Run()
 		const float dt = math::constrain(((now - _last_run) * 1e-6f), 0.000125f, 0.02f);
 		_last_run = now;
 
-		if(_param_mydemo_en.get())
+		if(_param_houzhong_en.get())
 		{
 			PX4_INFO("Hello, PX4! %f",(double)dt);
 		}
         	else
 		{
-			PX4_INFO("Hello, World!");
+			PX4_INFO("Hello, World!  %f",(double)_param_houzhong_test.get());
 
 		}
 	}

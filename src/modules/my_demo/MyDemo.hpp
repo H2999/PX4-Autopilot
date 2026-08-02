@@ -93,7 +93,8 @@ private:
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	DEFINE_PARAMETERS(
-		(ParamFloat<px4::params::MyDemo_P1>) _param_mydemo_p1,
-		(ParamInt<px4::params::MyDemo_EN>) _param_mydemo_en
+		(ParamInt<px4::params::MY_DEMO_EN>)       _param_houzhong_en,
+		(ParamFloat<px4::params::MY_DEMO_TEST>)   _param_houzhong_test
 	);
+
 };

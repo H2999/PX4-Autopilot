@@ -30,29 +30,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
-#include <px4_platform_common/px4_config.h>
-#include <px4_platform_common/defines.h>
-#include <parameters/param.h>
- /**
- * MyDemo Enable/Disable
+
+/**
+ * Acro mode maximum roll rate
  *
- * Demo
+ * Full stick deflection leads to this rate.
  *
  * @boolean
  * @group Demo
  */
-PARAM_DEFINE_INT32(MyDemo_EN, 1);
+PARAM_DEFINE_INT32(MY_DEMO_EN, 1);
 
 /**
- * MyDemo Parameter 1
+ * Low pass filter cutoff frequency for yaw torque setpoint
  *
- * my demo Parameter 1
+ * Reduces vibrations by lowering high frequency torque caused by rotor acceleration.
+ * 0 disables the filter
  *
- * @unit m
- * @min 0.5
- * @max 1.0
- * @decimal 1
- * @increment 0.1
+ * @min 0
+ * @max 10
+ * @unit Hz
+ * @decimal 3
  * @group Demo
  */
-PARAM_DEFINE_FLOAT(MyDemo_P1, 0.5f);
+PARAM_DEFINE_FLOAT(MY_DEMO_TEST, 2.f);
