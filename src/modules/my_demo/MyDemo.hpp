@@ -61,6 +61,9 @@
 #include <uORB/topics/vehicle_thrust_setpoint.h>
 #include <uORB/topics/vehicle_torque_setpoint.h>
 
+#include <uORB/topics/sensor_combined.h>
+#include <uORB/topics/mydemo.h>
+
 using namespace time_literals;
 
 class MyDemo : public ModuleBase<MyDemo>, public ModuleParams, public px4::WorkItem
@@ -91,6 +94,10 @@ private:
 	perf_counter_t	_loop_perf;
 	hrt_abstime _last_run{0};
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
+
+	uORB::Subscription _sensor_combined_sub{ORB_ID(sensor_combined)};
+	uORB::Publication<mydemo_s>	_my_demo_pub;
+
 
 	DEFINE_PARAMETERS(
 		(ParamInt<px4::params::MY_DEMO_EN>)       _param_houzhong_en,

@@ -40,7 +40,8 @@ using namespace time_literals;
 
 MyDemo::MyDemo() :
         ModuleParams(nullptr),
-        WorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl)
+        WorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl),
+	_my_demo_pub(ORB_ID(mydemo))
 {
 }
 
@@ -83,7 +84,8 @@ MyDemo::Run()
 	/* run controller on gyro changes */
 	vehicle_angular_velocity_s angular_velocity;
 
-	if (_vehicle_angular_velocity_sub.update(&angular_velocity)) {
+	if (_vehicle_angular_velocity_sub.update(&angular_velocity)) 
+	{
 
 		const hrt_abstime now = angular_velocity.timestamp_sample;
 
@@ -99,6 +101,21 @@ MyDemo::Run()
 		{
 			PX4_INFO("Hello, World!  %f",(double)_param_houzhong_test.get());
 
+		}
+
+		sensor_combined_s imu_data;
+		if(_sensor_combined_sub.update(&imu_data))
+		{
+			mydemo_s my_demo_data;
+			my_demo_data.timestamp = hrt_absolute_time();
+			my_demo_data.enable = true;
+			my_demo_data.acceleration[0] = imu_data.accelerometer_m_s2[0];
+			my_demo_data.acceleration[1] = imu_data.accelerometer_m_s2[1];
+			my_demo_data.acceleration[2] = imu_data.accelerometer_m_s2[2];
+			my_demo_data.acc_norm = sqrtf(imu_data.accelerometer_m_s2[0]*imu_data.accelerometer_m_s2[0] + 
+				imu_data.accelerometer_m_s2[1]*imu_data.accelerometer_m_s2[1] + imu_data.accelerometer_m_s2[2]*imu_data.accelerometer_m_s2[2]);
+
+			_my_demo_pub.publish(my_demo_data);
 		}
 	}
 }
