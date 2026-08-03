@@ -41,7 +41,7 @@ using namespace time_literals;
 MyDemo::MyDemo() :
         ModuleParams(nullptr),
         WorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl),
-	_my_demo_pub(ORB_ID(mydemo))
+	_my_demo_pub(ORB_ID(my_demo))
 {
 }
 
@@ -71,7 +71,7 @@ MyDemo::Run()
         perf_begin(_loop_perf);
 
 	// Check if parameters have changed
-	if (_parameter_update_sub.updated()) 
+	if (_parameter_update_sub.updated())
 	{
 		// clear update
 		parameter_update_s param_update;
@@ -84,7 +84,7 @@ MyDemo::Run()
 	/* run controller on gyro changes */
 	vehicle_angular_velocity_s angular_velocity;
 
-	if (_vehicle_angular_velocity_sub.update(&angular_velocity)) 
+	if (_vehicle_angular_velocity_sub.update(&angular_velocity))
 	{
 
 		const hrt_abstime now = angular_velocity.timestamp_sample;
@@ -106,13 +106,13 @@ MyDemo::Run()
 		sensor_combined_s imu_data;
 		if(_sensor_combined_sub.update(&imu_data))
 		{
-			mydemo_s my_demo_data;
+			my_demo_s my_demo_data;
 			my_demo_data.timestamp = hrt_absolute_time();
 			my_demo_data.enable = true;
 			my_demo_data.acceleration[0] = imu_data.accelerometer_m_s2[0];
 			my_demo_data.acceleration[1] = imu_data.accelerometer_m_s2[1];
 			my_demo_data.acceleration[2] = imu_data.accelerometer_m_s2[2];
-			my_demo_data.acc_norm = sqrtf(imu_data.accelerometer_m_s2[0]*imu_data.accelerometer_m_s2[0] + 
+			my_demo_data.acc_norm = sqrtf(imu_data.accelerometer_m_s2[0]*imu_data.accelerometer_m_s2[0] +
 				imu_data.accelerometer_m_s2[1]*imu_data.accelerometer_m_s2[1] + imu_data.accelerometer_m_s2[2]*imu_data.accelerometer_m_s2[2]);
 
 			_my_demo_pub.publish(my_demo_data);

@@ -62,7 +62,7 @@
 #include <uORB/topics/vehicle_torque_setpoint.h>
 
 #include <uORB/topics/sensor_combined.h>
-#include <uORB/topics/mydemo.h>
+#include <uORB/topics/my_demo.h>
 
 using namespace time_literals;
 
@@ -96,7 +96,7 @@ private:
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	uORB::Subscription _sensor_combined_sub{ORB_ID(sensor_combined)};
-	uORB::Publication<mydemo_s>	_my_demo_pub;
+	uORB::Publication<my_demo_s>	_my_demo_pub;
 
 
 	DEFINE_PARAMETERS(
