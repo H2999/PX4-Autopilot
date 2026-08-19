@@ -52,6 +52,9 @@ MyDemo::~MyDemo()
 bool
 MyDemo::init()
 {
+	//这里是事件驱动 有订阅的信息才会调用Run函数
+	// ScheduleOnInterval(SENSOR_INTERVAL_US); 这个是以SENSOR_INTERVAL_US频率调用Run函数
+	//当_vehicle_angular_velocity_sub订阅的话题发布消息就会自动调用Mydemo实例的Run方法
 	if (!_vehicle_angular_velocity_sub.registerCallback()) {
 		PX4_ERR("callback registration failed");
 		return false;

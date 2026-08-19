@@ -52,6 +52,10 @@
 
 using namespace time_literals;
 
+//public ModuleBase<WorkItemExample>,      // 提供 start/stop/status 命令
+//public ModuleParams,                     // 支持参数系统
+//public px4::ScheduledWorkItem            // 让模块运行在工作队列上
+
 class WorkItemExample : public ModuleBase<WorkItemExample>, public ModuleParams, public px4::ScheduledWorkItem
 {
 public:
@@ -82,7 +86,9 @@ private:
 	uORB::SubscriptionInterval         _parameter_update_sub{ORB_ID(parameter_update), 1_s}; // subscription limited to 1 Hz updates
 	uORB::Subscription                 _vehicle_status_sub{ORB_ID(vehicle_status)};          // regular subscription for additional data
 
-	// Performance (perf) counters
+	// 性能计数器 Performance (perf) counters
+	//PC_ELAPSED 测量 Run() 每次执行耗时，用于发现性能瓶颈
+	//PC_INTERVAL 测量两次 Run() 之间的时间间隔，用于检查调度是否稳定
 	perf_counter_t	_loop_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle")};
 	perf_counter_t	_loop_interval_perf{perf_alloc(PC_INTERVAL, MODULE_NAME": interval")};
 

@@ -66,6 +66,10 @@ private:
 
 	void Run() override;
 
+	//当你的模块发布的是系统中唯一、共识性的信息，比如飞行模式、系统状态，直接用 Publication 就行
+	//如果模块发布的是一类可能有多个物理来源的数据，比如 GPS、磁力计、距离传感器等，
+	//就必须使用 PublicationMulti。因为同一个主题可能有多个传感器同时在工作
+	
 	uORB::PublicationMulti<sensor_gps_s> _sensor_gps_pub{ORB_ID(sensor_gps)};
 	uORB::PublicationMulti<sensor_gnss_status_s> _sensor_gnss_status_pub{ORB_ID(sensor_gnss_status)};
 

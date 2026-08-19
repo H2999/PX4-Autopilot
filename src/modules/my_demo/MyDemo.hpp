@@ -98,6 +98,8 @@ private:
 	uORB::Subscription _sensor_combined_sub{ORB_ID(sensor_combined)};
 	uORB::Publication<my_demo_s>	_my_demo_pub;
 
+	bool houzhong_en;
+	float houzhong_test;
 
 	DEFINE_PARAMETERS(
 		(ParamInt<px4::params::MY_DEMO_EN>)       _param_houzhong_en,

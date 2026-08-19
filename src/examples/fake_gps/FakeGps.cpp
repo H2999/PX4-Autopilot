@@ -104,7 +104,8 @@ int FakeGps::task_spawn(int argc, char *argv[])
 	if (instance) {
 		_object.store(instance);
 		_task_id = task_id_is_work_queue;
-
+	//task_id_is_work_queue是一个特殊值-2,表示这个模块不是独立线程,而是运行在工作队列上
+	//如果 _task_id = -1 表示未运行，_task_id >= 0 是独立线程的句柄，-2 表示工作队列任务。
 		if (instance->init()) {
 			return PX4_OK;
 		}
@@ -120,6 +121,9 @@ int FakeGps::task_spawn(int argc, char *argv[])
 	return PX4_ERROR;
 }
 
+// 当用户在终端输入 fake_gps xxx（其中 xxx 不是 start、stop 或 status）时，这个函数会被调用
+// 它直接调用 print_usage("unknown command")，告诉用户“你输入的命令我不认识”，并打印帮助信息
+// 如果模块未来需要支持额外命令(如 fake_gps reset) 就可以在这里添加分支逻辑 目前它只负责"报错+显示帮助"
 int FakeGps::custom_command(int argc, char *argv[])
 {
 	return print_usage("unknown command");
@@ -128,18 +132,17 @@ int FakeGps::custom_command(int argc, char *argv[])
 int FakeGps::print_usage(const char *reason)
 {
 	if (reason) {
-		PX4_WARN("%s\n", reason);
+		PX4_WARN("%s\n", reason);		//如果有错误原因，先打印警告
 	}
-
 	PRINT_MODULE_DESCRIPTION(
 		R"DESCR_STR(
 ### Description
 
-)DESCR_STR");
+)DESCR_STR");						//打印模块描述（目前是空的）
 
-	PRINT_MODULE_USAGE_NAME("fake_gps", "driver");
-	PRINT_MODULE_USAGE_COMMAND("start");
-	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
+	PRINT_MODULE_USAGE_NAME("fake_gps", "driver");  // 模块名称 + 类别
+    	PRINT_MODULE_USAGE_COMMAND("start");            // 说明支持 start 命令
+    	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();          // 自动添加 stop 和 status 说明
 	return 0;
 }
 
