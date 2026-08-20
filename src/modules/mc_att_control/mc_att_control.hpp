@@ -60,8 +60,14 @@
 #include <lib/stick_yaw/StickYaw.hpp>
 
 #include <AttitudeControl.hpp>
+#include <SO3Control.hpp>
 
 using namespace time_literals;
+
+enum _param_mc_atti_method{
+	Quat_METHOD = 0,
+	SO3_METHOD = 1
+};
 
 class MulticopterAttitudeControl : public ModuleBase<MulticopterAttitudeControl>, public ModuleParams,
 	public px4::WorkItem
@@ -97,6 +103,7 @@ private:
 	void generate_attitude_setpoint(const matrix::Quatf &q, float dt);
 
 	AttitudeControl _attitude_control; /**< class for attitude control calculations */
+	SO3Control _SO3Control; /**< class for attitude control calculations */
 	StickYaw _stick_yaw{this};
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
@@ -168,6 +175,7 @@ private:
 		(ParamFloat<px4::params::MPC_THR_HOVER>) _param_mpc_thr_hover,
 		(ParamInt<px4::params::MPC_THR_CURVE>) _param_mpc_thr_curve,
 
-		(ParamFloat<px4::params::COM_SPOOLUP_TIME>) _param_com_spoolup_time
+		(ParamFloat<px4::params::COM_SPOOLUP_TIME>) _param_com_spoolup_time,
+		(ParamInt<px4::params::MC_ATTI_METHOD>) _param_mc_atti_method
 	)
 };

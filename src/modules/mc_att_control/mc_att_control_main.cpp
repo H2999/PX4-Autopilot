@@ -92,9 +92,14 @@ MulticopterAttitudeControl::parameters_updated()
 	_attitude_control.setProportionalGain(Vector3f(_param_mc_roll_p.get(), _param_mc_pitch_p.get(), _param_mc_yaw_p.get()),
 					      _param_mc_yaw_weight.get());
 
+	_SO3Control.setProportionalGain(Vector3f(_param_mc_roll_p.get(), _param_mc_pitch_p.get(), _param_mc_yaw_p.get()),
+					      _param_mc_yaw_weight.get());
+
 	// angular rate limits
 	using math::radians;
 	_attitude_control.setRateLimit(Vector3f(radians(_param_mc_rollrate_max.get()), radians(_param_mc_pitchrate_max.get()),
+						radians(_param_mc_yawrate_max.get())));
+	_SO3Control.setRateLimit(Vector3f(radians(_param_mc_rollrate_max.get()), radians(_param_mc_pitchrate_max.get()),
 						radians(_param_mc_yawrate_max.get())));
 
 	// Update from hover thrust parameter if there's no valid estimate in use
@@ -314,7 +319,10 @@ MulticopterAttitudeControl::Run()
 				    && (vehicle_attitude_setpoint.timestamp > _last_attitude_setpoint)) {
 
 					_attitude_control.setAttitudeSetpoint(Quatf(vehicle_attitude_setpoint.q_d), vehicle_attitude_setpoint.yaw_sp_move_rate);
+					_SO3Control.setAttitudeSetpoint(Quatf(vehicle_attitude_setpoint.q_d), vehicle_attitude_setpoint.yaw_sp_move_rate);
+
 					_thrust_setpoint_body = Vector3f(vehicle_attitude_setpoint.thrust_body);
+
 					_last_attitude_setpoint = vehicle_attitude_setpoint.timestamp;
 				}
 			}
@@ -334,12 +342,23 @@ MulticopterAttitudeControl::Run()
 				if (v_att.timestamp > _last_attitude_setpoint) {
 					// adapt existing attitude setpoint unless it was generated after the current attitude estimate
 					_attitude_control.adaptAttitudeSetpoint(delta_q_reset);
+
+					_SO3Control.adaptAttitudeSetpoint(delta_q_reset);
 				}
 
 				_quat_reset_counter = v_att.quat_reset_counter;
 			}
 
-			Vector3f rates_sp = _attitude_control.update(q);
+			Vector3f rates_sp;
+
+			if(_param_mc_atti_method.get() == SO3_METHOD)
+			{
+				rates_sp = _SO3Control.update(q);
+			}
+			else
+			{
+				rates_sp = _attitude_control.update(q);
+			}
 
 			const hrt_abstime now = hrt_absolute_time();
 			autotune_attitude_control_status_s pid_autotune;
