@@ -97,6 +97,27 @@ MulticopterRateControl::parameters_updated()
 				  radians(_param_mc_acro_y_max.get()));
 
 	_output_lpf_yaw.setCutoffFreq(_param_mc_yaw_tq_cutoff.get());
+
+	_adrc_control.ratex.TD.set_td_ratio_frequency(param_adrc_roll_td_xi.get(), param_adrc_roll_td_freq.get());
+	_adrc_control.ratex.EC.set_error_combine_coef(param_adrc_roll_err_gain1.get(), param_adrc_roll_err_gain2.get());
+	_adrc_control.ratex.ESO.set_disturb_limit(- param_adrc_roll_disturb_max.get(), param_adrc_roll_disturb_max.get());
+	_adrc_control.ratex.EC.set_disturb_gain(param_adrc_roll_disturb_gain.get());
+	_adrc_control.ratex.EC.set_output_limit(- param_adrc_roll_output_max.get(), param_adrc_roll_output_max.get());
+	_adrc_control.ratex.ESO.set_eso_gain_cutoff_frequency(param_adrc_roll_eso_gain.get(), param_adrc_roll_eso_bw.get());
+
+	_adrc_control.ratey.TD.set_td_ratio_frequency(param_adrc_pitch_td_xi.get(), param_adrc_pitch_td_freq.get());
+	_adrc_control.ratey.EC.set_error_combine_coef(param_adrc_pitch_err_gain1.get(), param_adrc_pitch_err_gain2.get());
+	_adrc_control.ratey.ESO.set_disturb_limit(-param_adrc_pitch_disturb_max.get(), param_adrc_pitch_disturb_max.get());
+	_adrc_control.ratey.EC.set_disturb_gain(param_adrc_pitch_disturb_gain.get());
+	_adrc_control.ratey.EC.set_output_limit(-param_adrc_pitch_output_max.get(), param_adrc_pitch_output_max.get());
+	_adrc_control.ratey.ESO.set_eso_gain_cutoff_frequency(param_adrc_pitch_eso_gain.get(), param_adrc_pitch_eso_bw.get());
+
+	_adrc_control.ratez.TD.set_td_ratio_frequency(param_adrc_yaw_td_xi.get(), param_adrc_yaw_td_freq.get());
+	_adrc_control.ratez.EC.set_error_combine_coef(param_adrc_yaw_err_gain1.get(), param_adrc_yaw_err_gain2.get());
+	_adrc_control.ratez.ESO.set_disturb_limit(-param_adrc_yaw_disturb_max.get(), param_adrc_yaw_disturb_max.get());
+	_adrc_control.ratez.EC.set_disturb_gain(param_adrc_yaw_disturb_gain.get());
+	_adrc_control.ratez.EC.set_output_limit(-param_adrc_yaw_output_max.get(), param_adrc_yaw_output_max.get());
+	_adrc_control.ratez.ESO.set_eso_gain_cutoff_frequency(param_adrc_yaw_eso_gain.get(), param_adrc_yaw_eso_bw.get());
 }
 
 void
@@ -216,8 +237,20 @@ MulticopterRateControl::Run()
 			}
 
 			// run rate controller
-			Vector3f torque_setpoint =
-				_rate_control.update(rates, _rates_setpoint, angular_accel, dt, _maybe_landed || _landed);
+			Vector3f torque_setpoint;
+			if(param_mc_rate_method.get())
+			{
+				printf("现在是ladrc %f\r\n",(double)param_mc_rate_method.get());
+				torque_setpoint = _adrc_control.update(rates, _rates_setpoint, dt, _maybe_landed || _landed);
+			}
+			else
+			{
+				printf("现在是pid %f\r\n",(double)param_mc_rate_method.get());
+
+				_adrc_control.update(rates, _rates_setpoint, dt, _maybe_landed || _landed);
+				torque_setpoint = _rate_control.update(rates, _rates_setpoint, angular_accel, dt, _maybe_landed || _landed);
+			}
+
 
 			// apply low-pass filtering on yaw axis to reduce high frequency torque caused by rotor acceleration
 			torque_setpoint(2) = _output_lpf_yaw.update(torque_setpoint(2), dt);
@@ -236,6 +269,14 @@ MulticopterRateControl::Run()
 			vehicle_torque_setpoint.xyz[0] = PX4_ISFINITE(torque_setpoint(0)) ? torque_setpoint(0) : 0.f;
 			vehicle_torque_setpoint.xyz[1] = PX4_ISFINITE(torque_setpoint(1)) ? torque_setpoint(1) : 0.f;
 			vehicle_torque_setpoint.xyz[2] = PX4_ISFINITE(torque_setpoint(2)) ? torque_setpoint(2) : 0.f;
+
+
+			ladrc_status_s ratex_status,ratey_status,ratez_status;
+			_adrc_control.record_rateloop_ladrc_status(ratex_status,ratey_status,ratez_status);
+
+			_ratex_ladrc_pub.publish(ratex_status);
+			_ratey_ladrc_pub.publish(ratey_status);
+			_ratez_ladrc_pub.publish(ratez_status);
 
 			// scale setpoints by battery status if enabled
 			if (_param_mc_bat_scale_en.get()) {

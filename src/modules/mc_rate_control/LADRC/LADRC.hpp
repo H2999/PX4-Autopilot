@@ -1,7 +1,6 @@
 #pragma once
 
 #include <matrix/matrix/math.hpp>
-// #include <lib/mixer_module/MultirotorMixer/MultirotorMixer.hpp>
 
 class TrackingDifferentiator
 {
@@ -76,10 +75,10 @@ public:
 
 	void set_disturb_gain(const float gain)
 	{
-		_disturb_gain = gain
+		_disturb_gain = gain;
 	}
 
-	void update(const float v1,const float z1,const float v2,const float z2,const float disturb)
+	float update(const float v1,const float z1,const float v2,const float z2,const float disturb)
 	{
 		e1 = v1 - z1;
 		e2 = v2 - z2;
@@ -87,7 +86,15 @@ public:
 		u0 = _beta1 * e1 + _beta2 * e2;
 		u = u0 + _disturb_gain * disturb;
 
-		u = math::constrain(u,_u_min,_u_max);
+		if(u < _u_min)
+		{
+			u = _u_min;
+		}
+		if(u > _u_max)
+		{
+			u = _u_max;
+		}
+		return u;
 	}
 
 	void reset()
@@ -152,6 +159,7 @@ public:
 		_beta1 = 3.0f * wc;
 		_beta2 = 3.0f * wc * wc;
 		_beta3 = wc * wc * wc;
+		_b0 = b0;
 	}
 
 	void set_disturb_limit(const float min,const float max)
@@ -160,18 +168,25 @@ public:
 		disturb_max = max;
 	}
 
-	void update(const float output,const float dt,const float input)
+	void update(const float output,const float dt,const float u)
 	{
-		u = input;
 		y = output;
 		float err = z1 - y;
 
 		z1 += dt * (z2 - _beta1 * err);
-		z2 += dt * (z3 + _b0 * u - _beta2 * err);
+		z2 += dt * (z3 - _beta2 * err + _b0 * u);
 		z3 += dt * (-_beta3 * err);
 
 		disturb = -z3/_b0;
-		disturb = math::constrain(disturb,disturb_min,disturb_max);
+
+		if(disturb < disturb_min)
+		{
+			disturb = disturb_min;
+		}
+		if(disturb > disturb_max)
+		{
+			disturb = disturb_max;
+		}
 	}
 
 	float get_eso_reference()
@@ -217,7 +232,6 @@ private:
 
 	float _b0{};
 	float y{};
-	float u{};
 
 	float disturb{};
 	float disturb_min{};
@@ -246,19 +260,19 @@ public:
 
 		float z1 = ESO.get_eso_state1();
 		float z2 = ESO.get_eso_state2();
-		float z3 = ESO.get_eso_state3();
 		float disturb = ESO.get_disturb();
 
-		EC.update(v1,z1,v2,z2,disturb);
+		const float u = EC.update(v1,z1,v2,z2,disturb);
 
-		ESO.update(output,dt,input);
+		ESO.update(output,dt,u);
 
 		const float result = EC.get_result();
-		return result
+		return result;
 	}
 
-private:
 	TrackingDifferentiator TD;
 	ErrorCombine EC;
 	ExtendedStateObserver ESO;
+private:
+
 };

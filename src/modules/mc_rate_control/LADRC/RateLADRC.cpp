@@ -35,91 +35,55 @@
  * @file rate_control.cpp
  */
 
-#include "rate_control.hpp"
+#include "RateLADRC.hpp"
 #include <px4_platform_common/defines.h>
-
+#include <px4_platform_common/time.h>
 using namespace matrix;
 
-void RateControl::setPidGains(const Vector3f &P, const Vector3f &I, const Vector3f &D)
-{
-	_gain_p = P;
-	_gain_i = I;
-	_gain_d = D;
-}
-
-void RateControl::setSaturationStatus(const Vector3<bool> &saturation_positive,
-				      const Vector3<bool> &saturation_negative)
-{
-	_control_allocator_saturation_positive = saturation_positive;
-	_control_allocator_saturation_negative = saturation_negative;
-}
-
-void RateControl::setPositiveSaturationFlag(size_t axis, bool is_saturated)
-{
-	if (axis < 3) {
-		_control_allocator_saturation_positive(axis) = is_saturated;
-	}
-}
-
-void RateControl::setNegativeSaturationFlag(size_t axis, bool is_saturated)
-{
-	if (axis < 3) {
-		_control_allocator_saturation_negative(axis) = is_saturated;
-	}
-}
-
-Vector3f RateControl::update(const Vector3f &rate, const Vector3f &rate_sp, const Vector3f &angular_accel,
+Vector3f RateLADRC::update(const Vector3f &rate, const Vector3f &rate_sp,
 			     const float dt, const bool landed)
 {
-	// angular rates error
-	Vector3f rate_error = rate_sp - rate;
+	Vector3f torque;
 
-	// PID control with feed forward
-	const Vector3f torque = _gain_p.emult(rate_error) + _rate_int - _gain_d.emult(angular_accel) + _gain_ff.emult(rate_sp);
+	torque(0) = ratex.update(rate_sp(0),rate(0),dt);
+	torque(1) = ratey.update(rate_sp(1),rate(1),dt);
+	torque(2) = ratez.update(rate_sp(2),rate(2),dt);
 
-	// update integral only if we are not landed
-	if (!landed) {
-		updateIntegral(rate_error, dt);
+	if(landed)
+	{
+		ratex.reset();
+		ratey.reset();
+		ratez.reset();
 	}
-
 	return torque;
 }
 
-void RateControl::updateIntegral(Vector3f &rate_error, const float dt)
+void RateLADRC::record_adrc_status(ladrc_status_s &rate_status , LADRC &ladrc)
 {
-	for (int i = 0; i < 3; i++) {
-		// prevent further positive control saturation
-		if (_control_allocator_saturation_positive(i)) {
-			rate_error(i) = math::min(rate_error(i), 0.f);
-		}
+	// rate_status.timestamp = hrt_absolute_time();
 
-		// prevent further negative control saturation
-		if (_control_allocator_saturation_negative(i)) {
-			rate_error(i) = math::max(rate_error(i), 0.f);
-		}
+	rate_status.v = ladrc.TD.get_input_signal();
+	rate_status.v1 = ladrc.TD.get_tracking_signal();
+	rate_status.v2 = ladrc.TD.get_differential_signal();
 
-		// I term factor: reduce the I gain with increasing rate error.
-		// This counteracts a non-linear effect where the integral builds up quickly upon a large setpoint
-		// change (noticeable in a bounce-back effect after a flip).
-		// The formula leads to a gradual decrease w/o steps, while only affecting the cases where it should:
-		// with the parameter set to 400 degrees, up to 100 deg rate error, i_factor is almost 1 (having no effect),
-		// and up to 200 deg error leads to <25% reduction of I.
-		float i_factor = rate_error(i) / math::radians(400.f);
-		i_factor = math::max(0.0f, 1.f - i_factor * i_factor);
+	rate_status.e1 = ladrc.EC.get_error1();
+	rate_status.e2 = ladrc.EC.get_error2();
+	rate_status.u0 = ladrc.EC.get_sum_error();
+	rate_status.u = ladrc.EC.get_result();
 
-		// Perform the integration using a first order method
-		float rate_i = _rate_int(i) + i_factor * _gain_i(i) * rate_error(i) * dt;
-
-		// do not propagate the result if out of range or invalid
-		if (PX4_ISFINITE(rate_i)) {
-			_rate_int(i) = math::constrain(rate_i, -_lim_int(i), _lim_int(i));
-		}
-	}
+	rate_status.y = ladrc.ESO.get_eso_reference();
+	rate_status.z1 = ladrc.ESO.get_eso_state1();
+	rate_status.z2 = ladrc.ESO.get_eso_state2();
+	rate_status.z3 = ladrc.ESO.get_eso_state3();
+	rate_status.disturb = ladrc.ESO.get_disturb();
 }
 
-void RateControl::getRateControlStatus(rate_ctrl_status_s &rate_ctrl_status)
+void RateLADRC::record_rateloop_ladrc_status(ladrc_status_s &ratex_status,
+		ladrc_status_s &ratey_status,ladrc_status_s &ratez_status)
 {
-	rate_ctrl_status.rollspeed_integ = _rate_int(0);
-	rate_ctrl_status.pitchspeed_integ = _rate_int(1);
-	rate_ctrl_status.yawspeed_integ = _rate_int(2);
+	record_adrc_status(ratex_status,ratex);
+	record_adrc_status(ratey_status,ratey);
+	record_adrc_status(ratez_status,ratez);
 }
+
+

@@ -33,6 +33,8 @@
 
 #pragma once
 
+#include "LADRC/RateLADRC.hpp"
+
 #include <lib/rate_control/rate_control.hpp>
 #include <lib/mathlib/math/filter/AlphaFilter.hpp>
 #include <lib/matrix/matrix/math.hpp>
@@ -61,7 +63,15 @@
 #include <uORB/topics/vehicle_thrust_setpoint.h>
 #include <uORB/topics/vehicle_torque_setpoint.h>
 
+
+
 using namespace time_literals;
+
+enum MC_RATE_METHOD
+{
+	RATE_METHOD_PID = 0,
+	RATE_EMTHOD_LADRC = 1
+};
 
 class MulticopterRateControl : public ModuleBase<MulticopterRateControl>, public ModuleParams, public px4::WorkItem
 {
@@ -91,6 +101,7 @@ private:
 	void updateActuatorControlsStatus(const vehicle_torque_setpoint_s &vehicle_torque_setpoint, float dt);
 
 	RateControl _rate_control; ///< class for rate control calculations
+	RateLADRC _adrc_control;
 
 	uORB::Subscription _battery_status_sub{ORB_ID(battery_status)};
 	uORB::Subscription _control_allocator_status_sub{ORB_ID(control_allocator_status)};
@@ -109,6 +120,10 @@ private:
 	uORB::Publication<vehicle_rates_setpoint_s>	_vehicle_rates_setpoint_pub{ORB_ID(vehicle_rates_setpoint)};
 	uORB::Publication<vehicle_thrust_setpoint_s>	_vehicle_thrust_setpoint_pub;
 	uORB::Publication<vehicle_torque_setpoint_s>	_vehicle_torque_setpoint_pub;
+
+	uORB::Publication<ladrc_status_s> _ratex_ladrc_pub{ORB_ID(ladrc_status_ratex)};
+	uORB::Publication<ladrc_status_s> _ratey_ladrc_pub{ORB_ID(ladrc_status_ratey)};
+	uORB::Publication<ladrc_status_s> _ratez_ladrc_pub{ORB_ID(ladrc_status_ratez)};
 
 	vehicle_control_mode_s	_vehicle_control_mode{};
 	vehicle_status_s	_vehicle_status{};
@@ -162,7 +177,38 @@ private:
 		(ParamFloat<px4::params::MC_ACRO_EXPO_Y>) _param_mc_acro_expo_y,				/**< expo stick curve shape (yaw) */
 		(ParamFloat<px4::params::MC_ACRO_SUPEXPO>) _param_mc_acro_supexpo,		/**< superexpo stick curve shape (roll & pitch) */
 		(ParamFloat<px4::params::MC_ACRO_SUPEXPOY>) _param_mc_acro_supexpoy,		/**< superexpo stick curve shape (yaw) */
+		(ParamBool<px4::params::MC_BAT_SCALE_EN>) _param_mc_bat_scale_en,
 
-		(ParamBool<px4::params::MC_BAT_SCALE_EN>) _param_mc_bat_scale_en
+		(ParamInt<px4::params::MC_RATE_METHOD>) param_mc_rate_method,
+
+		(ParamFloat<px4::params::ADRC_R_TD_XI>) param_adrc_roll_td_xi,
+		(ParamFloat<px4::params::ADRC_R_TD_FREQ>) param_adrc_roll_td_freq,
+		(ParamFloat<px4::params::ADRC_R_ERR_K1>) param_adrc_roll_err_gain1,
+		(ParamFloat<px4::params::ADRC_R_ERR_K2>) param_adrc_roll_err_gain2,
+		(ParamFloat<px4::params::ADRC_R_DGAIN>) param_adrc_roll_disturb_gain,
+		(ParamFloat<px4::params::ADRC_R_DMAX>) param_adrc_roll_disturb_max,
+		(ParamFloat<px4::params::ADRC_R_UMAX>) param_adrc_roll_output_max,
+		(ParamFloat<px4::params::ADRC_R_ESO_GAIN>) param_adrc_roll_eso_gain,
+		(ParamFloat<px4::params::ADRC_R_ESO_BW>) param_adrc_roll_eso_bw,
+
+		(ParamFloat<px4::params::ADRC_P_TD_XI>) param_adrc_pitch_td_xi,
+		(ParamFloat<px4::params::ADRC_P_TD_FREQ>) param_adrc_pitch_td_freq,
+		(ParamFloat<px4::params::ADRC_P_ERR_K1>) param_adrc_pitch_err_gain1,
+		(ParamFloat<px4::params::ADRC_P_ERR_K2>) param_adrc_pitch_err_gain2,
+		(ParamFloat<px4::params::ADRC_P_DGAIN>) param_adrc_pitch_disturb_gain,
+		(ParamFloat<px4::params::ADRC_P_DMAX>) param_adrc_pitch_disturb_max,
+		(ParamFloat<px4::params::ADRC_P_UMAX>) param_adrc_pitch_output_max,
+		(ParamFloat<px4::params::ADRC_P_ESO_GAIN>) param_adrc_pitch_eso_gain,
+		(ParamFloat<px4::params::ADRC_P_ESO_BW>) param_adrc_pitch_eso_bw,
+
+		(ParamFloat<px4::params::ADRC_Y_TD_XI>) param_adrc_yaw_td_xi,
+		(ParamFloat<px4::params::ADRC_Y_TD_FREQ>) param_adrc_yaw_td_freq,
+		(ParamFloat<px4::params::ADRC_Y_ERR_K1>) param_adrc_yaw_err_gain1,
+		(ParamFloat<px4::params::ADRC_Y_ERR_K2>) param_adrc_yaw_err_gain2,
+		(ParamFloat<px4::params::ADRC_Y_DGAIN>) param_adrc_yaw_disturb_gain,
+		(ParamFloat<px4::params::ADRC_Y_DMAX>) param_adrc_yaw_disturb_max,
+		(ParamFloat<px4::params::ADRC_Y_UMAX>) param_adrc_yaw_output_max,
+		(ParamFloat<px4::params::ADRC_Y_ESO_GAIN>) param_adrc_yaw_eso_gain,
+		(ParamFloat<px4::params::ADRC_Y_ESO_BW>) param_adrc_yaw_eso_bw
 	)
 };

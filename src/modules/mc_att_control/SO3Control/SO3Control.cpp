@@ -67,7 +67,7 @@ matrix::Vector3f SO3Control::update(const Quatf &q) const
 	// calculate angular rates setpoint
 	Vector3f rate_setpoint = Omegad.emult(_proportional_gain);
 
-	printf("SO3 , %f\r\n",(double)rate_setpoint(0));
+	// printf("SO3 , %f\r\n",(double)rate_setpoint(0));
 	// Feed forward the yaw setpoint rate.
 	// yawspeed_setpoint is the feed forward commanded rotation around the world z-axis,
 	// but we need to apply it in the body frame (because _rates_sp is expressed in the body frame).

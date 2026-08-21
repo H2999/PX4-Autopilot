@@ -274,6 +274,7 @@ set(msg_files
 	versioned/Wind.msg
 
 	MyDemo.msg
+	LadrcStatus.msg
 )
 list(SORT msg_files)
 
