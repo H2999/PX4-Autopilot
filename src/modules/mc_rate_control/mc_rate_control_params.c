@@ -331,7 +331,7 @@ PARAM_DEFINE_FLOAT(ADRC_R_TD_XI, 1.5f);
  * @decimal 1
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_R_TD_FREQ, 60.f);
+PARAM_DEFINE_FLOAT(ADRC_R_TD_FREQ, 20.f);
 
 /**
  * ADRC state1 feedback gain for roll
@@ -340,7 +340,7 @@ PARAM_DEFINE_FLOAT(ADRC_R_TD_FREQ, 60.f);
  * @decimal 4
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_R_ERR_K1, 0.05f);
+PARAM_DEFINE_FLOAT(ADRC_R_ERR_K1, 0.08f);
 
 /**
  * ADRC state2 feedback gain for roll
@@ -349,7 +349,7 @@ PARAM_DEFINE_FLOAT(ADRC_R_ERR_K1, 0.05f);
  * @decimal 4
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_R_ERR_K2, 0.001f);
+PARAM_DEFINE_FLOAT(ADRC_R_ERR_K2, 0.008f);
 
 /**
  * ADRC disturb gain for roll
@@ -367,7 +367,7 @@ PARAM_DEFINE_FLOAT(ADRC_R_DGAIN, 1.f);
  * @decimal 2
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_R_DMAX, 0.1f);
+PARAM_DEFINE_FLOAT(ADRC_R_DMAX, 0.25f);
 
 /**
  * ADRC output max amplitude for roll
@@ -376,7 +376,7 @@ PARAM_DEFINE_FLOAT(ADRC_R_DMAX, 0.1f);
  * @decimal 2
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_R_UMAX, 0.5f);
+PARAM_DEFINE_FLOAT(ADRC_R_UMAX, 0.25f);
 
 /**
  * ADRC ESO gain for roll
@@ -385,7 +385,7 @@ PARAM_DEFINE_FLOAT(ADRC_R_UMAX, 0.5f);
  * @decimal 0
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_R_ESO_GAIN, 3e4);
+PARAM_DEFINE_FLOAT(ADRC_R_ESO_GAIN, 2e2);
 
 /**
  * ADRC ESO bandwidth for roll
@@ -396,7 +396,7 @@ PARAM_DEFINE_FLOAT(ADRC_R_ESO_GAIN, 3e4);
  * @decimal 0
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_R_ESO_BW, 20);
+PARAM_DEFINE_FLOAT(ADRC_R_ESO_BW, 12);
 
 
 
@@ -416,7 +416,7 @@ PARAM_DEFINE_FLOAT(ADRC_P_TD_XI, 1.5f);
  * @decimal 1
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_P_TD_FREQ, 60.f);
+PARAM_DEFINE_FLOAT(ADRC_P_TD_FREQ, 20.f);
 
 /**
  * ADRC state1 feedback gain for pitch
@@ -425,7 +425,7 @@ PARAM_DEFINE_FLOAT(ADRC_P_TD_FREQ, 60.f);
  * @decimal 4
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_P_ERR_K1, 0.05f);
+PARAM_DEFINE_FLOAT(ADRC_P_ERR_K1, 0.08f);
 
 /**
  * ADRC state2 feedback gain for pitch
@@ -434,7 +434,7 @@ PARAM_DEFINE_FLOAT(ADRC_P_ERR_K1, 0.05f);
  * @decimal 4
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_P_ERR_K2, 0.001f);
+PARAM_DEFINE_FLOAT(ADRC_P_ERR_K2, 0.008f);
 
 /**
  * ADRC disturb gain for pitch
@@ -452,7 +452,7 @@ PARAM_DEFINE_FLOAT(ADRC_P_DGAIN, 1.f);
  * @decimal 2
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_P_DMAX, 0.1f);
+PARAM_DEFINE_FLOAT(ADRC_P_DMAX, 0.25f);
 
 /**
  * ADRC output max amplitude for pitch
@@ -461,7 +461,7 @@ PARAM_DEFINE_FLOAT(ADRC_P_DMAX, 0.1f);
  * @decimal 2
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_P_UMAX, 0.5f);
+PARAM_DEFINE_FLOAT(ADRC_P_UMAX, 0.25f);
 
 /**
  * ADRC ESO gain for pitch
@@ -470,7 +470,7 @@ PARAM_DEFINE_FLOAT(ADRC_P_UMAX, 0.5f);
  * @decimal 0
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_P_ESO_GAIN, 3e4);
+PARAM_DEFINE_FLOAT(ADRC_P_ESO_GAIN, 2e3);
 
 /**
  * ADRC ESO bandwidth for pitch
@@ -481,7 +481,7 @@ PARAM_DEFINE_FLOAT(ADRC_P_ESO_GAIN, 3e4);
  * @decimal 0
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_P_ESO_BW, 20);
+PARAM_DEFINE_FLOAT(ADRC_P_ESO_BW, 12);
 
 
 
@@ -501,7 +501,7 @@ PARAM_DEFINE_FLOAT(ADRC_Y_TD_XI, 1.5f);
  * @decimal 1
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_Y_TD_FREQ, 30.f);
+PARAM_DEFINE_FLOAT(ADRC_Y_TD_FREQ, 12.f);
 
 /**
  * ADRC state1 feedback gain for yaw
@@ -510,7 +510,7 @@ PARAM_DEFINE_FLOAT(ADRC_Y_TD_FREQ, 30.f);
  * @decimal 4
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_Y_ERR_K1, 0.03f);
+PARAM_DEFINE_FLOAT(ADRC_Y_ERR_K1, 0.05f);
 
 /**
  * ADRC state2 feedback gain for yaw
@@ -519,7 +519,7 @@ PARAM_DEFINE_FLOAT(ADRC_Y_ERR_K1, 0.03f);
  * @decimal 4
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_Y_ERR_K2, 0.001f);
+PARAM_DEFINE_FLOAT(ADRC_Y_ERR_K2, 0.004f);
 
 /**
  * ADRC disturb gain for yaw
@@ -537,7 +537,7 @@ PARAM_DEFINE_FLOAT(ADRC_Y_DGAIN, 1.f);
  * @decimal 2
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_Y_DMAX, 0.1f);
+PARAM_DEFINE_FLOAT(ADRC_Y_DMAX, 0.12f);
 
 /**
  * ADRC output max amplitude for yaw
@@ -546,7 +546,7 @@ PARAM_DEFINE_FLOAT(ADRC_Y_DMAX, 0.1f);
  * @decimal 2
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_Y_UMAX, 0.3f);
+PARAM_DEFINE_FLOAT(ADRC_Y_UMAX, 0.15f);
 
 /**
  * ADRC ESO gain for yaw
@@ -555,7 +555,7 @@ PARAM_DEFINE_FLOAT(ADRC_Y_UMAX, 0.3f);
  * @decimal 0
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_Y_ESO_GAIN, 1e4);
+PARAM_DEFINE_FLOAT(ADRC_Y_ESO_GAIN, 1e3);
 
 /**
  * ADRC ESO bandwidth for pitch
@@ -566,4 +566,4 @@ PARAM_DEFINE_FLOAT(ADRC_Y_ESO_GAIN, 1e4);
  * @decimal 0
  * @group Multicopter ADRC Control
  */
-PARAM_DEFINE_FLOAT(ADRC_Y_ESO_BW, 10);
+PARAM_DEFINE_FLOAT(ADRC_Y_ESO_BW, 8);

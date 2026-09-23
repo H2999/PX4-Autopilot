@@ -1,6 +1,7 @@
 #pragma once
 
 #include <matrix/matrix/math.hpp>
+#include <mathlib/math/Functions.hpp>
 
 class TrackingDifferentiator
 {
@@ -22,9 +23,18 @@ public:
 
 	void update(const float input,const float dt)
 	{
+		if (!PX4_ISFINITE(input) || !PX4_ISFINITE(dt) || dt <= 0.f || dt > 0.02f) {
+			reset();
+			return;
+		}
+
 		v = input;
 		v1 += dt * v2;
 		v2 += dt * (_a0 * (v - v1) - _a1 * v2);
+
+		if (!PX4_ISFINITE(v1) || !PX4_ISFINITE(v2)) {
+			reset();
+		}
 	}
 
 	float get_input_signal()
@@ -170,6 +180,12 @@ public:
 
 	void update(const float output,const float dt,const float u)
 	{
+		if (!PX4_ISFINITE(output) || !PX4_ISFINITE(dt) || !PX4_ISFINITE(u)
+		    || dt <= 0.f || dt > 0.02f || !PX4_ISFINITE(_b0) || fabsf(_b0) < 1e-3f) {
+			reset();
+			return;
+		}
+
 		y = output;
 		float err = z1 - y;
 
@@ -186,6 +202,10 @@ public:
 		if(disturb > disturb_max)
 		{
 			disturb = disturb_max;
+		}
+
+		if (!PX4_ISFINITE(z1) || !PX4_ISFINITE(z2) || !PX4_ISFINITE(z3) || !PX4_ISFINITE(disturb)) {
+			reset();
 		}
 	}
 
@@ -253,6 +273,12 @@ public:
 
 	float update(const float input,const float output,const float dt)
 	{
+		if (!PX4_ISFINITE(input) || !PX4_ISFINITE(output) || !PX4_ISFINITE(dt)
+		    || dt <= 0.f || dt > 0.02f) {
+			reset();
+			return 0.f;
+		}
+
 		TD.update(input,dt);
 
 		float v1 = TD.get_tracking_signal();
@@ -267,7 +293,7 @@ public:
 		ESO.update(output,dt,u);
 
 		const float result = EC.get_result();
-		return result;
+		return PX4_ISFINITE(result) ? result : 0.f;
 	}
 
 	TrackingDifferentiator TD;

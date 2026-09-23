@@ -213,6 +213,9 @@ void LoggedTopics::add_default_topics()
 	add_optional_topic("pps_capture");
 
 	// additional control allocation logging
+	add_optional_topic("ladrc_status_ratex", 20);
+	add_optional_topic("ladrc_status_ratey", 20);
+	add_optional_topic("ladrc_status_ratez", 20);
 	add_topic("actuator_motors", 100);
 	add_topic("actuator_servos", 100);
 	add_topic_multi("vehicle_thrust_setpoint", 20, 2);
@@ -279,6 +282,9 @@ void LoggedTopics::add_high_rate_topics()
 	add_topic("vehicle_attitude");
 	add_topic("vehicle_attitude_setpoint");
 	add_topic("vehicle_rates_setpoint");
+	add_optional_topic("ladrc_status_ratex");
+	add_optional_topic("ladrc_status_ratey");
+	add_optional_topic("ladrc_status_ratez");
 
 	add_topic("esc_status", 5);
 	add_topic("actuator_motors");

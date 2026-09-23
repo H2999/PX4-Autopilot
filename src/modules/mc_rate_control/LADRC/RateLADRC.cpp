@@ -36,6 +36,7 @@
  */
 
 #include "RateLADRC.hpp"
+#include <drivers/drv_hrt.h>
 #include <px4_platform_common/defines.h>
 #include <px4_platform_common/time.h>
 using namespace matrix;
@@ -55,12 +56,17 @@ Vector3f RateLADRC::update(const Vector3f &rate, const Vector3f &rate_sp,
 		ratey.reset();
 		ratez.reset();
 	}
+
+	for (int i = 0; i < 3; i++) {
+		torque(i) = math::constrain(PX4_ISFINITE(torque(i)) ? torque(i) : 0.f, -1.f, 1.f);
+	}
+
 	return torque;
 }
 
 void RateLADRC::record_adrc_status(ladrc_status_s &rate_status , LADRC &ladrc)
 {
-	// rate_status.timestamp = hrt_absolute_time();
+	rate_status.timestamp = hrt_absolute_time();
 
 	rate_status.v = ladrc.TD.get_input_signal();
 	rate_status.v1 = ladrc.TD.get_tracking_signal();
@@ -85,5 +91,3 @@ void RateLADRC::record_rateloop_ladrc_status(ladrc_status_s &ratex_status,
 	record_adrc_status(ratey_status,ratey);
 	record_adrc_status(ratez_status,ratez);
 }
-
-

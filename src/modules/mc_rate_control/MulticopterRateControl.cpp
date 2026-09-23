@@ -240,13 +240,10 @@ MulticopterRateControl::Run()
 			Vector3f torque_setpoint;
 			if(param_mc_rate_method.get())
 			{
-				printf("现在是ladrc %f\r\n",(double)param_mc_rate_method.get());
 				torque_setpoint = _adrc_control.update(rates, _rates_setpoint, dt, _maybe_landed || _landed);
 			}
 			else
 			{
-				printf("现在是pid %f\r\n",(double)param_mc_rate_method.get());
-
 				_adrc_control.update(rates, _rates_setpoint, dt, _maybe_landed || _landed);
 				torque_setpoint = _rate_control.update(rates, _rates_setpoint, angular_accel, dt, _maybe_landed || _landed);
 			}
@@ -266,9 +263,9 @@ MulticopterRateControl::Run()
 			vehicle_torque_setpoint_s vehicle_torque_setpoint{};
 
 			_thrust_setpoint.copyTo(vehicle_thrust_setpoint.xyz);
-			vehicle_torque_setpoint.xyz[0] = PX4_ISFINITE(torque_setpoint(0)) ? torque_setpoint(0) : 0.f;
-			vehicle_torque_setpoint.xyz[1] = PX4_ISFINITE(torque_setpoint(1)) ? torque_setpoint(1) : 0.f;
-			vehicle_torque_setpoint.xyz[2] = PX4_ISFINITE(torque_setpoint(2)) ? torque_setpoint(2) : 0.f;
+			vehicle_torque_setpoint.xyz[0] = math::constrain(PX4_ISFINITE(torque_setpoint(0)) ? torque_setpoint(0) : 0.f, -1.f, 1.f);
+			vehicle_torque_setpoint.xyz[1] = math::constrain(PX4_ISFINITE(torque_setpoint(1)) ? torque_setpoint(1) : 0.f, -1.f, 1.f);
+			vehicle_torque_setpoint.xyz[2] = math::constrain(PX4_ISFINITE(torque_setpoint(2)) ? torque_setpoint(2) : 0.f, -1.f, 1.f);
 
 
 			ladrc_status_s ratex_status,ratey_status,ratez_status;
