@@ -48,6 +48,7 @@ px4_add_module(
 		DShotTelemetry.cpp
 		esc/AM32Settings.cpp
 	DEPENDS
+		turtle_recovery
 		arch_io_pins
 		arch_dshot
 		mixer_module

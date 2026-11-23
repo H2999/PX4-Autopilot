@@ -81,3 +81,10 @@ px4_add_module(
 
 px4_add_unit_gtest(SRC mag_calibration_test.cpp LINKLIBS modules__commander)
 px4_add_functional_gtest(SRC ModeManagementTest.cpp LINKLIBS modules__commander)
+
+# Turtle entry tests instantiate the real arming checks; resolve their cyclic
+# references to the authorization helper and MAVLink log library on host builds.
+if(TARGET functional-ModeManagement)
+	target_link_libraries(functional-ModeManagement PRIVATE
+		-Wl,--start-group health_and_arming_checks ArmAuthorization systemlib -Wl,--end-group)
+endif()

@@ -33,6 +33,7 @@
 
 #pragma once
 
+#include "ImpactReflex.hpp"
 #include <lib/rate_control/rate_control.hpp>
 #include <lib/mathlib/math/filter/AlphaFilter.hpp>
 #include <lib/matrix/matrix/math.hpp>
@@ -53,7 +54,9 @@
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/rate_ctrl_status.h>
+#include <uORB/topics/vehicle_acceleration.h>
 #include <uORB/topics/vehicle_angular_velocity.h>
+#include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_land_detected.h>
 #include <uORB/topics/vehicle_rates_setpoint.h>
@@ -93,10 +96,13 @@ private:
 	void updateActuatorControlsStatus(const vehicle_torque_setpoint_s &vehicle_torque_setpoint, float dt);
 
 	RateControl _rate_control; ///< class for rate control calculations
+	ImpactReflex _impact_reflex; ///< 1 kHz impact detach & attitude catch reflex
 
 	uORB::Subscription _battery_status_sub{ORB_ID(battery_status)};
 	uORB::Subscription _control_allocator_status_sub{ORB_ID(control_allocator_status)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};
+	uORB::Subscription _vehicle_acceleration_sub{ORB_ID(vehicle_acceleration)};
+	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::Subscription _vehicle_control_mode_sub{ORB_ID(vehicle_control_mode)};
 	uORB::Subscription _vehicle_land_detected_sub{ORB_ID(vehicle_land_detected)};
 	uORB::Subscription _vehicle_rates_setpoint_sub{ORB_ID(vehicle_rates_setpoint)};
@@ -112,6 +118,8 @@ private:
 	uORB::Publication<vehicle_thrust_setpoint_s>	_vehicle_thrust_setpoint_pub;
 	uORB::Publication<vehicle_torque_setpoint_s>	_vehicle_torque_setpoint_pub;
 
+	vehicle_acceleration_s	_vehicle_acceleration{};
+	vehicle_attitude_s	_vehicle_attitude{};
 	vehicle_control_mode_s	_vehicle_control_mode{};
 	vehicle_status_s	_vehicle_status{};
 
@@ -165,6 +173,19 @@ private:
 		(ParamFloat<px4::params::MC_ACRO_SUPEXPO>) _param_mc_acro_supexpo,		/**< superexpo stick curve shape (roll & pitch) */
 		(ParamFloat<px4::params::MC_ACRO_SUPEXPOY>) _param_mc_acro_supexpoy,		/**< superexpo stick curve shape (yaw) */
 
-		(ParamBool<px4::params::MC_BAT_SCALE_EN>) _param_mc_bat_scale_en
+		(ParamBool<px4::params::MC_BAT_SCALE_EN>) _param_mc_bat_scale_en,
+
+		(ParamInt<px4::params::MC_IMP_MODE>) _param_mc_imp_mode,
+		(ParamFloat<px4::params::MC_IMP_ACC_THR>) _param_mc_imp_acc_thr,
+		(ParamFloat<px4::params::MC_IMP_DBNC_MS>) _param_mc_imp_dbnc_ms,
+		(ParamFloat<px4::params::MC_IMP_IDLE_THR>) _param_mc_imp_idle_thr,
+		(ParamFloat<px4::params::MC_IMP_DROP_60>) _param_mc_imp_drop_60,
+		(ParamFloat<px4::params::MC_IMP_DROP_120>) _param_mc_imp_drop_120,
+		(ParamFloat<px4::params::MC_IMP_REC_THR>) _param_mc_imp_rec_thr,
+		(ParamFloat<px4::params::MC_IMP_REC_T>) _param_mc_imp_rec_t,
+		(ParamFloat<px4::params::MC_IMP_REC_PITCH>) _param_mc_imp_rec_pitch,
+		(ParamFloat<px4::params::MC_IMP_REC_ROLL>) _param_mc_imp_rec_roll,
+		(ParamFloat<px4::params::MC_IMP_REC_P>) _param_mc_imp_rec_p,
+		(ParamFloat<px4::params::MC_IMP_REC_RMAX>) _param_mc_imp_rec_rmax
 	)
 };

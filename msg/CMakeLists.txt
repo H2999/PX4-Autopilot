@@ -42,6 +42,7 @@ set(msg_files
 	ActuatorControlsStatus.msg
 	ActuatorOutputs.msg
 	ActuatorServosTrim.msg
+	TurtleStatus.msg
 	ActuatorTest.msg
 	AdcReport.msg
 	Airspeed.msg

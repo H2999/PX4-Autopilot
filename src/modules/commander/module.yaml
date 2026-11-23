@@ -2,6 +2,66 @@ module_name: Commander
 parameters:
     - group: Commander
       definitions:
+        TRTL_PWR:
+            description:
+                short: Maximum Turtle recovery throttle
+                long: Normalised throttle, not measured thrust. Output is hard limited to 0.6, including old stored values above that limit. Start with propellers removed.
+            type: float
+            min: 0.05
+            max: 0.6
+            decimal: 2
+            default: 0.4
+        TRTL_RATE:
+            description:
+                short: Turtle angular rate target
+                long: Recovery throttle reduces as measured body angular speed approaches this value. Upright levelling caps this target at 1 rad/s. Hard cutoff remains 8 rad/s.
+            type: float
+            unit: rad/s
+            min: 0.5
+            max: 6.0
+            decimal: 1
+            default: 4.0
+        TRTL_PULSE:
+            description:
+                short: Maximum duration of each inverted Turtle thrust pulse
+            type: float
+            unit: s
+            min: 0.1
+            max: 6.0
+            decimal: 2
+            default: 1.5
+        TRTL_LPULSE:
+            description:
+                short: Maximum duration of each upright levelling pulse
+                long: Independent of inverted recovery. Attitude, rate, cancellation and safety limits can stop thrust earlier.
+            type: float
+            unit: s
+            min: 0.1
+            max: 6.0
+            decimal: 2
+            default: 5.0
+        TRTL_TOUT:
+            description:
+                short: Maximum total automatic Turtle recovery attempt
+                long: Includes stop, direction commands, thrust and settling. Exit and re-enter to retry.
+            type: float
+            unit: s
+            min: 2
+            max: 20
+            decimal: 1
+            default: 10
+        TRTL_EN:
+            description:
+                short: Enable experimental automatic Turtle recovery mode
+                long: |
+                    Requires Bluejay-compatible relative DShot direction commands, coplanar Quad-X,
+                    valid CA rotor geometry and all four motors assigned to DShot outputs.
+                    Enter Turtle only while disarmed, on the ground, throttle low and sticks centred.
+                    Inverted recovery reverses the higher pair. Upright levelling starts at 3 degrees
+                    and uses the lower pair in its saved normal direction, stopping at 1 degree.
+                    With this enabled, arming requires a live DShot recovery readiness heartbeat.
+            type: boolean
+            default: 0
         COM_MODE${i}_HASH:
             description:
                 short: External mode identifier ${i}
@@ -39,6 +99,7 @@ parameters:
                 12: Follow Me
                 13: Precision Land
                 16: Altitude Cruise
+                17: Turtle
                 100: External Mode 1
                 101: External Mode 2
                 102: External Mode 3

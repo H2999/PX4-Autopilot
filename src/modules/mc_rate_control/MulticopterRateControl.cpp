@@ -99,6 +99,32 @@ MulticopterRateControl::parameters_updated()
 				  radians(_param_mc_acro_y_max.get()));
 
 	_output_lpf_yaw.setCutoffFreq(_param_mc_yaw_tq_cutoff.get());
+
+	ImpactReflex::Config imp_cfg{};
+	const int32_t raw_mode = _param_mc_imp_mode.get();
+
+	if (raw_mode == 1) {
+		imp_cfg.mode = ImpactReflex::Mode::Slope60;
+
+	} else if (raw_mode == 2) {
+		imp_cfg.mode = ImpactReflex::Mode::Overhang120;
+
+	} else {
+		imp_cfg.mode = ImpactReflex::Mode::Disabled;
+	}
+
+	imp_cfg.acc_threshold_mps2 = _param_mc_imp_acc_thr.get();
+	imp_cfg.debounce_s = _param_mc_imp_dbnc_ms.get() * 1e-3f;
+	imp_cfg.idle_thrust = _param_mc_imp_idle_thr.get();
+	imp_cfg.drop_time_60_s = _param_mc_imp_drop_60.get();
+	imp_cfg.drop_time_120_s = _param_mc_imp_drop_120.get();
+	imp_cfg.recover_thrust = _param_mc_imp_rec_thr.get();
+	imp_cfg.recover_time_s = _param_mc_imp_rec_t.get();
+	imp_cfg.recover_pitch_rad = radians(_param_mc_imp_rec_pitch.get());
+	imp_cfg.recover_roll_rad = radians(_param_mc_imp_rec_roll.get());
+	imp_cfg.recover_tilt_p = _param_mc_imp_rec_p.get();
+	imp_cfg.recover_rate_max_rads = radians(_param_mc_imp_rec_rmax.get());
+	_impact_reflex.setConfig(imp_cfg);
 }
 
 void
@@ -149,6 +175,8 @@ MulticopterRateControl::Run()
 		}
 
 		_vehicle_status_sub.update(&_vehicle_status);
+		_vehicle_acceleration_sub.update(&_vehicle_acceleration);
+		_vehicle_attitude_sub.update(&_vehicle_attitude);
 
 		// use rates setpoint topic
 		vehicle_rates_setpoint_s vehicle_rates_setpoint{};
@@ -188,9 +216,36 @@ MulticopterRateControl::Run()
 		// run the rate controller
 		if (_vehicle_control_mode.flag_control_rates_enabled) {
 
+			Vector3f active_rates_setpoint = _rates_setpoint;
+			Vector3f active_thrust_setpoint = _thrust_setpoint;
+
 			// reset integral if disarmed
 			if (!_vehicle_control_mode.flag_armed || _vehicle_status.vehicle_type != vehicle_status_s::VEHICLE_TYPE_ROTARY_WING) {
 				_rate_control.resetIntegral();
+				_impact_reflex.reset();
+
+			} else if (_param_mc_imp_mode.get() != 0) {
+				const hrt_abstime current_time = hrt_absolute_time();
+				ImpactReflex::Input imp_in{};
+				imp_in.dt_s = dt;
+				imp_in.offboard_active = (_vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_OFFBOARD);
+				imp_in.armed = _vehicle_control_mode.flag_armed;
+				imp_in.flying = !_landed;
+				imp_in.accel_valid = (_vehicle_acceleration.timestamp > 0) && ((current_time - _vehicle_acceleration.timestamp) < 100_ms);
+				imp_in.attitude_valid = (_vehicle_attitude.timestamp > 0) && ((current_time - _vehicle_attitude.timestamp) < 100_ms);
+				imp_in.body_accel_frd = Vector3f(_vehicle_acceleration.xyz);
+				imp_in.attitude_q = Quatf(_vehicle_attitude.q);
+
+				const ImpactReflex::Output imp_out = _impact_reflex.update(imp_in);
+
+				if (imp_out.reset_integral) {
+					_rate_control.resetIntegral();
+				}
+
+				if (imp_out.override_setpoints) {
+					active_rates_setpoint = imp_out.rates_sp_rads;
+					active_thrust_setpoint = imp_out.thrust_sp_body;
+				}
 			}
 
 			// update saturation status from control allocation feedback
@@ -217,7 +272,7 @@ MulticopterRateControl::Run()
 
 			// run rate controller
 			Vector3f torque_setpoint =
-				_rate_control.update(rates, _rates_setpoint, angular_accel, dt, _maybe_landed || _landed);
+				_rate_control.update(rates, active_rates_setpoint, angular_accel, dt, _maybe_landed || _landed);
 
 			// apply low-pass filtering on yaw axis to reduce high frequency torque caused by rotor acceleration
 			torque_setpoint(2) = _output_lpf_yaw.update(torque_setpoint(2), dt);
@@ -232,7 +287,7 @@ MulticopterRateControl::Run()
 			vehicle_thrust_setpoint_s vehicle_thrust_setpoint{};
 			vehicle_torque_setpoint_s vehicle_torque_setpoint{};
 
-			_thrust_setpoint.copyTo(vehicle_thrust_setpoint.xyz);
+			active_thrust_setpoint.copyTo(vehicle_thrust_setpoint.xyz);
 			vehicle_torque_setpoint.xyz[0] = PX4_ISFINITE(torque_setpoint(0)) ? torque_setpoint(0) : 0.f;
 			vehicle_torque_setpoint.xyz[1] = PX4_ISFINITE(torque_setpoint(1)) ? torque_setpoint(1) : 0.f;
 			vehicle_torque_setpoint.xyz[2] = PX4_ISFINITE(torque_setpoint(2)) ? torque_setpoint(2) : 0.f;

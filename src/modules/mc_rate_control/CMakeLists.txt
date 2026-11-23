@@ -31,6 +31,16 @@
 #
 ############################################################################
 
+px4_add_library(ImpactReflex
+	ImpactReflex.cpp
+	ImpactReflex.hpp
+)
+target_compile_options(ImpactReflex PRIVATE ${MAX_CUSTOM_OPT_LEVEL})
+target_include_directories(ImpactReflex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(ImpactReflex PRIVATE mathlib)
+
+px4_add_unit_gtest(SRC ImpactReflexTest.cpp LINKLIBS ImpactReflex)
+
 px4_add_module(
 	MODULE modules__mc_rate_control
 	MAIN mc_rate_control
@@ -44,6 +54,7 @@ px4_add_module(
 		mc_rate_control_params.yaml
 	DEPENDS
 		circuit_breaker
+		ImpactReflex
 		mathlib
 		RateControl
 		px4_work_queue

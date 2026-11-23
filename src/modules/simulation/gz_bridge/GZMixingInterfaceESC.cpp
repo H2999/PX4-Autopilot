@@ -75,6 +75,17 @@ bool GZMixingInterfaceESC::updateOutputs(float outputs[MAX_ACTUATORS], unsigned 
 		}
 	}
 
+	uint32_t available = active_output_count > 0 ? (1u << active_output_count) - 1 : 0;
+	const turtle::Output recovery = _turtle.update(available);
+
+	if (recovery.own) {
+		_mixing_output.stopActuatorTest();
+
+		if (recovery.command == 21) { _reverse_mask |= recovery.mask; }
+
+		if (recovery.command == 20) { _reverse_mask &= ~recovery.mask; }
+	}
+
 	if (active_output_count > 0) {
 		gz::msgs::Actuators rotor_velocity_message;
 
@@ -83,11 +94,24 @@ bool GZMixingInterfaceESC::updateOutputs(float outputs[MAX_ACTUATORS], unsigned 
 		vel->Reserve(active_output_count);
 
 		for (unsigned i = 0; i < active_output_count; ++i) {
-			vel->Add(static_cast<double>(outputs[i]));
+			double velocity = static_cast<double>(outputs[i]);
+
+			if (recovery.own) {
+				velocity = (recovery.command == 255 && (recovery.mask & (1u << i))) ?
+					   static_cast<double>(recovery.power) * _mixing_output.maxValue(i) : 0.0;
+			}
+
+			if (_reverse_mask & (1u << i)) { velocity = -velocity; }
+
+			vel->Add(velocity);
 		}
 
 		if (_actuators_pub.Valid()) {
-			return _actuators_pub.Publish(rotor_velocity_message);
+			const bool sent = _actuators_pub.Publish(rotor_velocity_message);
+
+			if (sent && recovery.own && recovery.mask && (recovery.command == 20 || recovery.command == 21)) { _turtle.frameSent(); }
+
+			return sent;
 		}
 	}
 
@@ -99,6 +123,9 @@ void GZMixingInterfaceESC::Run()
 	pthread_mutex_lock(&_node_mutex);
 	_mixing_output.update();
 	_mixing_output.updateSubscriptions(false);
+
+	if (_turtle.enabled() || _turtle.active()) { ScheduleDelayed(10_ms); }
+
 	pthread_mutex_unlock(&_node_mutex);
 }
 

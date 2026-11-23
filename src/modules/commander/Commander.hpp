@@ -54,6 +54,7 @@
 #include <uORB/Publication.hpp>
 #include <uORB/topics/actuator_armed.h>
 #include <uORB/topics/actuator_test.h>
+#include <uORB/topics/turtle_status.h>
 #include <uORB/topics/vehicle_command_ack.h>
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_status.h>
@@ -297,6 +298,9 @@ private:
 	vehicle_control_mode_s  _vehicle_control_mode{};
 	vtol_vehicle_status_s	_vtol_vehicle_status{};
 
+	turtle_status_s _turtle_status{};
+	uORB::Subscription _turtle_status_sub{ORB_ID(turtle_status)};
+
 	// Subscriptions
 	uORB::Subscription					_action_request_sub{ORB_ID(action_request)};
 	uORB::Subscription					_cpuload_sub{ORB_ID(cpuload)};
@@ -337,6 +341,7 @@ private:
 	param_t _param_rc_map_fltmode{PARAM_INVALID};
 
 	DEFINE_PARAMETERS(
+		(ParamBool<px4::params::TRTL_EN>) _param_turtle_enable,
 		(ParamFloat<px4::params::COM_DISARM_LAND>)  _param_com_disarm_land,
 		(ParamFloat<px4::params::COM_DISARM_PRFLT>) _param_com_disarm_prflt,
 		(ParamInt<px4::params::COM_DL_LOSS_T>)      _param_com_dl_loss_t,

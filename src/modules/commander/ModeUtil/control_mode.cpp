@@ -49,6 +49,10 @@ void getVehicleControlMode(uint8_t nav_state, uint8_t vehicle_type,
 {
 
 	switch (nav_state) {
+	case vehicle_status_s::NAVIGATION_STATE_TURTLE:
+		// Disarmed ground recovery is driven exclusively by DShot, no flight controllers.
+		break;
+
 	case vehicle_status_s::NAVIGATION_STATE_MANUAL:
 		vehicle_control_mode.flag_control_manual_enabled = true;
 

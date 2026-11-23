@@ -126,6 +126,20 @@ TEST_F(SwitchTest, KillSwitch)
 	EXPECT_EQ(_action_request_sub.get().action, ACTION_KILL);
 }
 
+TEST_F(SwitchTest, TurtleModeSlot)
+{
+	const int32_t turtle_slot_value = 17;
+	param_set(param_find("COM_FLTMODE4"), &turtle_slot_value);
+	_manual_control_input_pub.publish({.timestamp_sample = _timestamp, .valid = true,
+					   .data_source = manual_control_setpoint_s::SOURCE_RC});
+	_manual_control_switches_pub.publish({.timestamp_sample = _timestamp,
+					      .mode_slot = manual_control_switches_s::MODE_SLOT_4});
+	_manual_control.processInput(_timestamp += 100_ms);
+	ASSERT_TRUE(_action_request_sub.update());
+	EXPECT_EQ(_action_request_sub.get().action, ACTION_SWITCH_MODE);
+	EXPECT_EQ(_action_request_sub.get().mode, vehicle_status_s::NAVIGATION_STATE_TURTLE);
+}
+
 TEST_F(SwitchTest, TransitionSwitch)
 {
 	// GIVEN: valid stick input from RC

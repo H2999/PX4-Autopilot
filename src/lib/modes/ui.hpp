@@ -45,7 +45,8 @@ namespace mode_util
  */
 static inline uint32_t getValidNavStates()
 {
-	return (1u << vehicle_status_s::NAVIGATION_STATE_MANUAL) |
+	return (1u << vehicle_status_s::NAVIGATION_STATE_TURTLE) |
+	       (1u << vehicle_status_s::NAVIGATION_STATE_MANUAL) |
 	       (1u << vehicle_status_s::NAVIGATION_STATE_ALTCTL) |
 	       (1u << vehicle_status_s::NAVIGATION_STATE_ALTITUDE_CRUISE) |
 	       (1u << vehicle_status_s::NAVIGATION_STATE_POSCTL) |
@@ -79,7 +80,7 @@ const char *const nav_state_names[vehicle_status_s::NAVIGATION_STATE_MAX] = {
 	"Position Slow",
 	"Guided Course",
 	"Altitude Cruise",
-	"9: unallocated",
+	"Turtle",
 	"Acro",
 	"11: UNUSED",
 	"Descend",

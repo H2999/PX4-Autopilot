@@ -43,6 +43,14 @@
 
 #include "DShotCommon.h"
 #include "DShotTelemetry.h"
+#include <lib/turtle_recovery/TurtleControl.hpp>
+#include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_angular_velocity.h>
+#include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/vehicle_land_detected.h>
+#include <uORB/topics/manual_control_setpoint.h>
+#include <uORB/topics/input_rc.h>
+#include <uORB/topics/turtle_status.h>
 
 using namespace time_literals;
 
@@ -136,6 +144,9 @@ private:
 
 	// Mixer
 	MixingOutput _mixing_output{PARAM_PREFIX, DSHOT_MAXIMUM_CHANNELS, *this, MixingOutput::SchedulingPolicy::Auto, false, false};
+
+	turtle::Control _turtle{_mixing_output, DSHOT_MAXIMUM_CHANNELS};
+	uORB::Subscription _turtle_vehicle_sub{ORB_ID(vehicle_status)};
 
 	// Actuator-order masks (indexed by output channel)
 	uint32_t _output_mask{0};

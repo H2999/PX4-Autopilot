@@ -667,6 +667,23 @@ transition_result_t Commander::arm(arm_disarm_reason_t calling_reason, bool run_
 		return TRANSITION_NOT_CHANGED;
 	}
 
+	_turtle_status_sub.update(&_turtle_status);
+	const bool turtle_selected = _vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_TURTLE
+				     || _user_mode_intention.get() == vehicle_status_s::NAVIGATION_STATE_TURTLE;
+	const bool turtle_guard_required = _param_turtle_enable.get() || _turtle_status.active;
+	const bool turtle_not_ready = turtle_guard_required &&
+				      (_turtle_status.timestamp == 0 || hrt_elapsed_time(&_turtle_status.timestamp) > 300_ms
+				       || !_turtle_status.ready_for_arming);
+
+	// Applies to every arming source, including force-arm. A command burst sent is
+	// not an ESC acknowledgement; direction is separately verified on the bench.
+	if (turtle_selected || turtle_not_ready) {
+		mavlink_log_critical(&_mavlink_log_pub, "Arming denied: exit Turtle and wait for direction restoration\t");
+		events::send(events::ID("commander_arm_denied_turtle"), events::Log::Critical,
+			     "Arming denied: Turtle recovery not ready");
+		return TRANSITION_DENIED;
+	}
+
 	if (_vehicle_status.calibration_enabled
 	    || _vehicle_status.rc_calibration_in_progress
 	    || _actuator_armed.in_esc_calibration_mode) {
@@ -932,7 +949,10 @@ Commander::handle_command(const vehicle_command_s &cmd)
 
 			if (base_mode & VEHICLE_MODE_FLAG_CUSTOM_MODE_ENABLED) {
 				/* use autopilot-specific mode */
-				if (custom_main_mode == PX4_CUSTOM_MAIN_MODE_MANUAL) {
+				if (custom_main_mode == PX4_CUSTOM_MAIN_MODE_TURTLE) {
+					desired_nav_state = vehicle_status_s::NAVIGATION_STATE_TURTLE;
+
+				} else if (custom_main_mode == PX4_CUSTOM_MAIN_MODE_MANUAL) {
 					desired_nav_state = vehicle_status_s::NAVIGATION_STATE_MANUAL;
 
 				} else if (custom_main_mode == PX4_CUSTOM_MAIN_MODE_ALTCTL) {
@@ -1779,6 +1799,13 @@ void Commander::handleCommandsFromModeExecutors()
 
 unsigned Commander::handleCommandActuatorTest(const vehicle_command_s &cmd)
 {
+	_turtle_status_sub.update(&_turtle_status);
+
+	if (_turtle_status.active || _vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_TURTLE
+	    || _user_mode_intention.get() == vehicle_status_s::NAVIGATION_STATE_TURTLE) {
+		return vehicle_command_ack_s::VEHICLE_CMD_RESULT_TEMPORARILY_REJECTED;
+	}
+
 	if (isArmed() || (_safety.isButtonAvailable() && !_safety.isSafetyOff())) {
 		return vehicle_command_ack_s::VEHICLE_CMD_RESULT_DENIED;
 	}
@@ -2007,6 +2034,14 @@ void Commander::run()
 		systemPowerUpdate();
 
 		landDetectorUpdate();
+
+		_turtle_status_sub.update(&_turtle_status);
+
+		if (isArmed() && _turtle_status.active && hrt_elapsed_time(&_turtle_status.timestamp) < 300_ms) {
+			// Defensive arbitration if an arming request raced with mode activation.
+			disarm(arm_disarm_reason_t::failsafe, true);
+		}
+
 
 		safetyButtonUpdate();
 

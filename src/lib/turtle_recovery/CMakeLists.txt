@@ -1,0 +1,2 @@
+px4_add_library(turtle_recovery TurtleControl.cpp)
+target_link_libraries(turtle_recovery PUBLIC mixer_module)

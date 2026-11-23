@@ -236,3 +236,126 @@ parameters:
       max: 10
       unit: Hz
       decimal: 3
+    MC_IMP_MODE:
+      description:
+        short: High-speed impact detach and catch reflex mode
+        long: |-
+          Enables the 1 kHz onboard impact reflex inside mc_rate_control during Offboard flight.
+          One-shot per arming cycle: companion sets 1 or 2 before terminal dash, then resets to 0
+          before re-arming for the next strike. Always yields immediately on manual mode takeover.
+      type: enum
+      values:
+        0: Disabled
+        1: Upward slope (60-75 deg, e.g. Base armor)
+        2: Downward overhang (105-120 deg, e.g. Outpost armor)
+      default: 0
+    MC_IMP_ACC_THR:
+      description:
+        short: Impact reflex horizontal acceleration threshold
+        long: |-
+          Body-frame XY specific-force magnitude threshold (and 0.6x on +Z ceiling push)
+          to trigger the onboard impact detach reflex.
+      type: float
+      default: 45.0
+      min: 15.0
+      max: 200.0
+      unit: m/s^2
+      decimal: 1
+    MC_IMP_DBNC_MS:
+      description:
+        short: Impact reflex debounce duration
+        long: Continuous duration acceleration must stay above MC_IMP_ACC_THR to trigger.
+      type: float
+      default: 3.0
+      min: 0.0
+      max: 30.0
+      unit: ms
+      decimal: 1
+    MC_IMP_IDLE_THR:
+      description:
+        short: Impact reflex idle thrust during detach drop
+        long: Normalized upward collective thrust during DetachDrop to prevent wall wedge-lock.
+      type: float
+      default: 0.07
+      min: 0.0
+      max: 0.25
+      decimal: 3
+    MC_IMP_DROP_60:
+      description:
+        short: Detach drop duration for 60 deg upward slope
+        long: Duration of idle-thrust zero-rate detach phase in MC_IMP_MODE=1.
+      type: float
+      default: 0.05
+      min: 0.01
+      max: 0.30
+      unit: s
+      decimal: 3
+    MC_IMP_DROP_120:
+      description:
+        short: Detach drop duration for 105-120 deg overhang
+        long: Duration of idle-thrust zero-rate gravity drop phase in MC_IMP_MODE=2 to clear overhang before pitch-up.
+      type: float
+      default: 0.11
+      min: 0.02
+      max: 0.35
+      unit: s
+      decimal: 3
+    MC_IMP_REC_THR:
+      description:
+        short: Impact reflex catch recovery collective thrust
+        long: Safe high-TWR normalized collective thrust applied during CatchRecover phase.
+      type: float
+      default: 0.45
+      min: 0.15
+      max: 0.85
+      decimal: 2
+    MC_IMP_REC_T:
+      description:
+        short: Impact reflex catch recovery duration
+        long: Duration of CatchRecover attitude-leveling and vertical braking phase before returning control to Offboard.
+      type: float
+      default: 0.25
+      min: 0.05
+      max: 1.0
+      unit: s
+      decimal: 3
+    MC_IMP_REC_PITCH:
+      description:
+        short: Impact reflex catch target pitch angle
+        long: Target FRD pitch angle during CatchRecover (positive = nose-up retreat away from target).
+      type: float
+      default: 8.0
+      min: -15.0
+      max: 30.0
+      unit: deg
+      decimal: 1
+    MC_IMP_REC_ROLL:
+      description:
+        short: Impact reflex catch target roll angle
+        long: Optional FRD roll-out angle during CatchRecover (e.g. tangential evasion on rotating Outpost).
+      type: float
+      default: 0.0
+      min: -30.0
+      max: 30.0
+      unit: deg
+      decimal: 1
+    MC_IMP_REC_P:
+      description:
+        short: Impact reflex catch tilt P gain
+        long: Proportional gain mapping SO(3) tilt error to body rate setpoint during CatchRecover.
+      type: float
+      default: 8.0
+      min: 2.0
+      max: 16.0
+      unit: 1/s
+      decimal: 1
+    MC_IMP_REC_RMAX:
+      description:
+        short: Impact reflex max catch angular rate
+        long: Maximum roll and pitch angular rate command during CatchRecover.
+      type: float
+      default: 600.0
+      min: 100.0
+      max: 1000.0
+      unit: deg/s
+      decimal: 1

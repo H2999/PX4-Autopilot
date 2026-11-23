@@ -49,6 +49,11 @@ bool UserModeIntention::change(uint8_t user_intended_nav_state, ModeChangeSource
 		user_intended_nav_state = _handler->getReplacedModeIfAny(user_intended_nav_state);
 	}
 
+	// Even forced mode changes must not activate ground recovery in armed flight.
+	if (user_intended_nav_state == vehicle_status_s::NAVIGATION_STATE_TURTLE && isArmed()) {
+		return false;
+	}
+
 	// Always allow mode change while disarmed
 	bool always_allow = force || !isArmed();
 	bool allow_change = true;

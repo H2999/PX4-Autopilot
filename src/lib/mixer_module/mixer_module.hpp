@@ -165,6 +165,8 @@ public:
 
 	const actuator_armed_s &armed() const { return _armed; }
 	bool isActuatorTestRunning() const { return _actuator_test.inTestMode(); }
+	bool inActuatorTest() const { return _actuator_test.inTestMode(); }
+	void stopActuatorTest() { _actuator_test.reset(); }
 
 	void setAllFailsafeValues(uint16_t value);
 	void setAllDisarmedValues(uint16_t value);

@@ -119,6 +119,8 @@ void DShot::Run()
 	// check at end of cycle (updateSubscriptions() can potentially change to a different WorkQueue thread)
 	_mixing_output.updateSubscriptions(true);
 
+	if (_turtle.enabled() || _turtle.active()) { ScheduleDelayed(10_ms); }
+
 	perf_end(_cycle_perf);
 }
 
@@ -126,6 +128,41 @@ bool DShot::updateOutputs(float *outputs, unsigned num_outputs, unsigned num_con
 {
 	if (!_hardware_initialized || !_motor_count) {
 		return false;
+	}
+
+	const turtle::Output recovery = _turtle.update(_output_mask, _3d_enabled);
+
+	if (recovery.own) {
+		_current_command.clear();
+		_mixing_output.stopActuatorTest();
+		// This is a separate, disarmed output owner. Never mix ordinary control or
+		// actuator-test values into the recovery sequence, including its exit path.
+		bool command_sent = recovery.mask != 0 && (recovery.mask & _output_mask) == recovery.mask;
+
+		for (unsigned i = 0; i < num_outputs; ++i) {
+			if (!(_output_mask & (1u << i))) { continue; }
+
+			if (recovery.mask & (1u << i)) {
+				if (recovery.command == 20 || recovery.command == 21) {
+					up_dshot_motor_command(i, recovery.command, true);
+
+				} else if (recovery.command == 255 && recovery.power > 0.f) {
+					up_dshot_motor_data_set(i, static_cast<uint16_t>(recovery.power * DSHOT_MAX_THROTTLE), false);
+
+				} else {
+					up_dshot_motor_command(i, DSHOT_CMD_MOTOR_STOP, false);
+				}
+
+			} else {
+				up_dshot_motor_command(i, DSHOT_CMD_MOTOR_STOP, false);
+			}
+		}
+
+		up_dshot_trigger();
+
+		if (command_sent && (recovery.command == 20 || recovery.command == 21)) { _turtle.frameSent(); }
+
+		return true;
 	}
 
 	uint16_t hw_outputs[MAX_ACTUATORS] = {};
@@ -804,6 +841,20 @@ void DShot::handle_vehicle_commands()
 
 void DShot::handle_configure_actuator(const vehicle_command_s &command)
 {
+	vehicle_status_s status{};
+	_turtle_vehicle_sub.copy(&status);
+
+	if (_turtle.active() || status.nav_state == vehicle_status_s::NAVIGATION_STATE_TURTLE) {
+		vehicle_command_ack_s ack{};
+		ack.timestamp = hrt_absolute_time();
+		ack.command = command.command;
+		ack.target_system = command.source_system;
+		ack.target_component = command.source_component;
+		ack.result = vehicle_command_ack_s::VEHICLE_CMD_RESULT_TEMPORARILY_REJECTED;
+		_command_ack_pub.publish(ack);
+		return;
+	}
+
 	int function = (int)(command.param5 + 0.5);
 
 	if (function > 1000) {
@@ -918,6 +969,7 @@ void DShot::update_params()
 	_parameter_update_sub.copy(&pupdate);
 
 	updateParams();
+	_turtle.mappingChanged();
 
 	// Cache params used in hot path
 	_bdshot_edt_enabled = _param_dshot_bidir_edt.get();
@@ -1003,6 +1055,8 @@ void DShot::mixerChanged()
 		up_dshot_arm(true);
 		_hardware_initialized = true;
 	}
+
+	_turtle.mappingChanged();
 }
 
 bool DShot::initialize_dshot()

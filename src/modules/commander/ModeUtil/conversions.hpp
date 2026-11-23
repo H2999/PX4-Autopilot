@@ -46,6 +46,8 @@ namespace mode_util
 static inline navigation_mode_t navigation_mode(uint8_t nav_state)
 {
 	switch (nav_state) {
+	case vehicle_status_s::NAVIGATION_STATE_TURTLE: return navigation_mode_t::turtle;
+
 	case vehicle_status_s::NAVIGATION_STATE_MANUAL: return navigation_mode_t::manual;
 
 	case vehicle_status_s::NAVIGATION_STATE_ALTCTL: return navigation_mode_t::altctl;

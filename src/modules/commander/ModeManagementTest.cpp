@@ -99,3 +99,59 @@ TEST(ModeManagementTest, Hashes)
 
 	EXPECT_FALSE(modes.hasFreeExternalModes());
 }
+
+#include "UserModeIntention.hpp"
+#include "ModeUtil/control_mode.hpp"
+#include "ModeUtil/mode_requirements.hpp"
+#define DEFINE_GET_PX4_CUSTOM_MODE
+#include "px4_custom_mode.h"
+#include <lib/modes/ui.hpp>
+
+TEST(TurtleModeTest, ModeDiscoveryAndControlIsolation)
+{
+	const uint8_t mode = vehicle_status_s::NAVIGATION_STATE_TURTLE;
+	EXPECT_TRUE(mode_util::getValidNavStates() & (1u << mode));
+	EXPECT_STREQ(mode_util::nav_state_names[mode], "Turtle");
+	EXPECT_EQ(get_px4_custom_mode(mode).main_mode, PX4_CUSTOM_MAIN_MODE_TURTLE);
+	vehicle_control_mode_s control{};
+	mode_util::getVehicleControlMode(mode, vehicle_status_s::VEHICLE_TYPE_ROTARY_WING, {}, control, {});
+	EXPECT_FALSE(control.flag_control_rates_enabled);
+	EXPECT_FALSE(control.flag_control_attitude_enabled);
+	EXPECT_FALSE(control.flag_control_position_enabled);
+	EXPECT_FALSE(control.flag_control_allocation_enabled);
+	failsafe_flags_s flags{};
+	mode_util::getModeRequirements(vehicle_status_s::VEHICLE_TYPE_ROTARY_WING, flags);
+	EXPECT_TRUE(flags.mode_req_prevent_arming & (1u << mode));
+	EXPECT_TRUE(flags.mode_req_manual_control & (1u << mode));
+	EXPECT_TRUE(flags.mode_req_attitude & (1u << mode));
+}
+
+TEST(TurtleModeTest, RejectEvenForcedEntryWhileArmed)
+{
+	vehicle_status_s status{};
+	HealthAndArmingChecks checks(nullptr, status);
+	UserModeIntention intention(status, checks, nullptr);
+	status.arming_state = vehicle_status_s::ARMING_STATE_ARMED;
+	EXPECT_FALSE(intention.change(vehicle_status_s::NAVIGATION_STATE_TURTLE, ModeChangeSource::User, false, true));
+	status.arming_state = vehicle_status_s::ARMING_STATE_DISARMED;
+	// No successful pre-arm checks are needed to SELECT the disarmed ground mode.
+	EXPECT_FALSE(checks.canArm(vehicle_status_s::NAVIGATION_STATE_TURTLE));
+	EXPECT_TRUE(intention.change(vehicle_status_s::NAVIGATION_STATE_TURTLE));
+	EXPECT_TRUE(intention.change(vehicle_status_s::NAVIGATION_STATE_STAB));
+}
+
+TEST(TurtleModeTest, RejectArmedEntryViaExternalReplacement)
+{
+	class Replacement : public ModeChangeHandler
+	{
+	public:
+		void onUserIntendedNavStateChange(ModeChangeSource, uint8_t) override {}
+		uint8_t getReplacedModeIfAny(uint8_t) override { return vehicle_status_s::NAVIGATION_STATE_TURTLE; }
+		uint8_t onDisarm(uint8_t mode) override { return mode; }
+	} handler;
+	vehicle_status_s status{};
+	HealthAndArmingChecks checks(nullptr, status);
+	UserModeIntention intention(status, checks, &handler);
+	status.arming_state = vehicle_status_s::ARMING_STATE_ARMED;
+	EXPECT_FALSE(intention.change(vehicle_status_s::NAVIGATION_STATE_EXTERNAL1, ModeChangeSource::User, false, true));
+}

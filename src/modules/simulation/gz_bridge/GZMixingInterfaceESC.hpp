@@ -35,6 +35,7 @@
 
 #include <lib/failure_injection/FailureInjection.hpp>
 #include <lib/mixer_module/mixer_module.hpp>
+#include <lib/turtle_recovery/TurtleControl.hpp>
 
 #include <gz/msgs.hh>
 #include <gz/transport.hh>
@@ -61,6 +62,7 @@ public:
 	MixingOutput &mixingOutput() { return _mixing_output; }
 
 	bool init(const std::string &model_name);
+	void mixerChanged() override { _turtle.mappingChanged(); }
 
 	void stop()
 	{
@@ -80,6 +82,8 @@ private:
 
 	MixingOutput _mixing_output{"SIM_GZ_EC", MAX_ACTUATORS, *this, MixingOutput::SchedulingPolicy::Auto, false, false};
 
+	turtle::Control _turtle{_mixing_output, MAX_ACTUATORS};
+	uint32_t _reverse_mask{};
 	gz::transport::Node::Publisher _actuators_pub;
 
 	uORB::Publication<esc_status_s> _esc_status_pub{ORB_ID(esc_status)};
